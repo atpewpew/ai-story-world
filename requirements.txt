@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+requests
+python-dotenv
+google-genai
+prometheus-fastapi-instrumentator
+pytest
+httpx
+redis
+neo4j
+chromadb
+sentence-transformers
+pinecone-client
+qdrant-client

@@ -1,0 +1,27 @@
+{
+  "session_id": "c5a22896-95ca-4887-8408-97ce3466697b",
+  "session_name": "flow",
+  "created_at": "2025-10-09T14:16:06Z",
+  "history": [
+    {
+      "turn_id": 0,
+      "actor": "ai",
+      "text": "You wake up in a misty forest. The air is heavy with fog. In the distance, a flickering lantern glows faintly.",
+      "timestamp": "2025-10-09T14:16:06Z"
+    },
+    {
+      "turn_id": 1,
+      "actor": "ai",
+      "text": "The wind rustles through the trees as the story continues, responding to the action.\n\nA) Explore the clearing\nB) Call out for help",
+      "timestamp": "2025-10-09T14:16:06Z"
+    }
+  ],
+  "world": {
+    "characters": {},
+    "items": {},
+    "locations": {}
+  },
+  "branches": {},
+  "vector_meta": [],
+  "kg_sync_ts": "2025-10-09T14:16:06Z"
+}

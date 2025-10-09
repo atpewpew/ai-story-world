@@ -1,0 +1,21 @@
+{
+  "session_id": "71ab0388-bdc7-4bfd-ba14-3bafd672c83d",
+  "session_name": "ok",
+  "created_at": "2025-10-09T20:58:33Z",
+  "history": [
+    {
+      "turn_id": 0,
+      "actor": "ai",
+      "text": "You wake up in a misty forest. The air is heavy with fog. In the distance, a flickering lantern glows faintly.",
+      "timestamp": "2025-10-09T20:58:33Z"
+    }
+  ],
+  "world": {
+    "characters": {},
+    "items": {},
+    "locations": {}
+  },
+  "branches": {},
+  "vector_meta": [],
+  "kg_sync_ts": "2025-10-09T20:58:33Z"
+}

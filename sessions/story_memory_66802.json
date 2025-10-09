@@ -1,0 +1,16 @@
+{
+  "id": "66802",
+  "history": [
+    "You wake up in a misty forest. The air is heavy with fog. In the distance, a flickering lantern glows faintly.",
+    "You push through the thick mist, the ground uneven beneath your feet. The faint glow of the lantern seems to recede and reappear, playing tricks on your eyes in the swirling fog. As you draw closer, you begin to make out a shape behind the light – a small, dilapidated cottage, its wooden walls warped and aged. The lantern hangs precariously from a hook beside a heavy, creaking door. A thin wisp of smoke curls lazily from a crumbling stone chimney.\n\nThe air around the cottage is still and silent, the mist clinging to its eaves like a shroud. No sound emerges from within, only the gentle sway of the lantern and the whisper of the wind through the unseen trees. A feeling of unease prickles at your skin, yet a strange curiosity compels you forward. The door stands slightly ajar, a sliver of darkness visible within.\n\nWhat do you do?\n\nA. Push open the door and enter the cottage.\nB. Circle the cottage, looking for another way in or a window.",
+    "You decide against immediate entry, the chill of the mist a more appealing option than the unknown warmth beyond the slightly open door. You begin to circle the cottage, your footsteps muffled by the damp earth. The mist is a constant companion, swirling and parting to reveal glimpses of the warped wood and moss-covered stones. You pass a single, grimy window on the side, its panes so encrusted with dirt and grime that it's impossible to see anything within. A shiver, unrelated to the cold, runs down your spine.\n\nAs you round to the back of the cottage, the silence is broken by a faint, rhythmic scratching sound coming from somewhere nearby. The mist seems to thin slightly here, revealing a small, overgrown garden, its once-cultivated rows now a tangle of weeds and thorny bushes. In the center of the garden, barely visible through the vegetation, stands a gnarled, ancient-looking tree, its branches reaching like skeletal fingers towards the sky. The scratching seems to be coming from the base of this tree.\n\nWhat do you do?\n\nA. Approach the gnarled tree to investigate the scratching sound.\nB. Return to the front of the cottage and the slightly ajar door."
+  ],
+  "world": {
+    "location": "dilapidated cottage exterior (back, near gnarled tree)",
+    "inventory": [
+      "lantern"
+    ],
+    "npcs": {},
+    "notes": "Mist is thick. Cottage is old and warped. Door is slightly ajar. Smoke from chimney. Feeling of unease and curiosity. Still misty. Circled cottage. Passed grimy window. Heard rhythmic scratching from base of gnarled tree in overgrown garden. Feeling of unease."
+  }
+}

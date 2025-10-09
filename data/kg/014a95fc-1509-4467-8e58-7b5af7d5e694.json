@@ -1,0 +1,11 @@
+{
+  "facts": [
+    {
+      "type": "possession",
+      "subject": "Alice",
+      "predicate": "picks up",
+      "object": "key",
+      "certainty": 0.6
+    }
+  ]
+}
