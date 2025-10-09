@@ -1,0 +1,14 @@
+{
+  "id": "87720",
+  "session_name": "API Test Session",
+  "created_at": "2025-10-10T05:15:37.847959",
+  "history": [
+    "You wake up in a misty forest. The air is heavy with fog. In the distance, a flickering lantern glows faintly."
+  ],
+  "world": {
+    "location": "",
+    "inventory": [],
+    "npcs": {},
+    "notes": ""
+  }
+}

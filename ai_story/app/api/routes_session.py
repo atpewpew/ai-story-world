@@ -28,6 +28,13 @@ def get_session(session_id: str = Query(..., description="Session UUID/ID")):
     return session
 
 
+@router.get("/list_sessions")
+def list_sessions():
+    manager = SessionManager()
+    sessions = manager.list_sessions()
+    return {"sessions": sessions}
+
+
 @router.post("/delete_session")
 def delete_session(session_id: str):
     manager = SessionManager()

@@ -108,6 +108,29 @@ class SessionManager:
             self._cache[session_id] = session
             self._atomic_write(session_id, session)
 
+    def list_sessions(self) -> list:
+        """List all available sessions with metadata"""
+        sessions = []
+        try:
+            for filename in os.listdir(SESSIONS_DIR):
+                if filename.endswith('.json'):
+                    session_id = filename[:-5]  # Remove .json extension
+                    try:
+                        session = self.load_session(session_id)
+                        if session:
+                            sessions.append({
+                                "session_id": session_id,
+                                "session_name": session.get("session_name", "Unnamed Session"),
+                                "created_at": session.get("created_at", "Unknown"),
+                                "history_count": len(session.get("history", [])),
+                                "last_modified": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(os.path.getmtime(self._path(session_id))))
+                            })
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        return sorted(sessions, key=lambda x: x.get("created_at", ""), reverse=True)
+
     def _atomic_write(self, session_id: str, data: Dict[str, Any]) -> None:
         path = self._path(session_id)
         tmp = f"{path}.tmp"
