@@ -1,34 +1,136 @@
-/node_modules
-/.env
-/.venv
-.env
-.venv
+# Python
 __pycache__/
-node_modules/
+*.py[cod]
+*$py.class
+*.so
+.Python
 venv/
-*.pyc
-*.pyo
-node_modules
+.venv/
+env/
+ENV/
 
-# Node modules
-node_modules/
-
-# Build artifacts
-dist/
-build/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Environment and IDE files
+# Environment
 .env
 *.log
-.DS_Store
+
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS junk
+# OS
+.DS_Store
 Thumbs.db
 
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data
 data/
+
+
+# ======================================
+# 🌐 Universal Git Ignore for FastAPI + Vite/React
+# ======================================
+
+# --- Python / FastAPI Backend ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.py.class
+*.log
+*.env
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+pip-wheel-metadata/
+*.egg-info/
+*.egg
+*.sqlite3
+instance/
+data/sessions/
+data/kg/
+*.db
+
+# --- FastAPI cache / build files ---
+*.cache/
+*.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.pytest_cache/
+.pyre/
+.dmypy.json
+.pytype/
+
+# --- Node / Frontend (Vite/React) ---
+web/node_modules/
+web/dist/
+web/.vite/
+web/.env
+web/.env.*
+web/.DS_Store
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+web/pnpm-debug.log*
+web/package-lock.json
+
+# --- Build artifacts ---
+build/
+dist/
+*.egg-info/
+*.manifest
+*.spec
+
+# --- Docker ---
+*.pid
+*.tar
+*.log
+docker-compose.override.yml
+
+# --- Editor / OS files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# --- Tests ---
+.pytest_cache/
+.coverage
+nosetests.xml
+coverage.xml
+test-results/
+.cache/
+
+# --- Temporary & debug files ---
+*.bak
+*.tmp
+*.old
+*.orig
+
+# --- Local Data (optional if large) ---
+data/sessions/
+data/kg/
+
+# --- Misc ---
+meow.pyc
