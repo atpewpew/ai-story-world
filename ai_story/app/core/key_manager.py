@@ -1,7 +1,7 @@
 import os
 import time
 import asyncio
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 import redis
@@ -144,6 +144,7 @@ class KeyManager:
             return None, "concurrency_limit"
         
         try:
+            print(f"[Gemini] Calling model={model} using key_id={key_info.key_id}")
             client = genai.Client(api_key=key_info.api_key)
             content = types.Content(parts=[types.Part(text=prompt)])
             response = client.models.generate_content(
@@ -159,9 +160,11 @@ class KeyManager:
             text = getattr(response, "text", None)
             if isinstance(text, str) and text.strip():
                 self.record_success(key_info)
+                print(f"[Gemini] Success with key_id={key_info.key_id}")
                 return text.strip(), None
             else:
                 self.record_error(key_info, "empty_response")
+                print(f"[Gemini] Empty response from key_id={key_info.key_id}")
                 return None, "empty_response"
                 
         except Exception as e:
@@ -173,6 +176,7 @@ class KeyManager:
             elif "403" in str(e):
                 error_type = "forbidden"
             
+            print(f"[Gemini] API call failed for key_id={key_info.key_id}: {error_type} - {str(e)}")
             self.record_error(key_info, error_type)
             return None, error_type
         finally:
@@ -180,17 +184,23 @@ class KeyManager:
 
     async def generate_with_rotation(self, prompt: str, model: str = "gemini-2.5-flash") -> str:
         """Generate text with automatic key rotation and fallback"""
+        print(f"[Gemini] Starting rotation with {len(self.keys)} keys available")
+        
         # Try each available key
-        for _ in range(len(self.keys)):
+        for attempt in range(len(self.keys)):
             key_info = await self.get_available_key()
             if not key_info:
+                print(f"[Gemini] No available keys on attempt {attempt + 1}")
                 break
             
+            print(f"[Gemini] Attempt {attempt + 1}: trying key_id={key_info.key_id}")
             result, error = await self.generate_with_key(key_info, prompt, model)
             if result:
+                print(f"[Gemini] Success on attempt {attempt + 1} with key_id={key_info.key_id}")
                 return result
             
             # If we get here, the key failed
+            print(f"[Gemini] Failed on attempt {attempt + 1} with key_id={key_info.key_id}: {error}")
             if error in ["circuit_breaker_open", "concurrency_limit"]:
                 continue  # Try next key
             elif error in ["quota_exceeded", "rate_limit"]:
@@ -198,7 +208,78 @@ class KeyManager:
                 continue
         
         # All keys failed, return fallback
+        print(f"[Gemini] All {len(self.keys)} keys failed, returning fallback response")
         return "The story continues with the wind rustling through the trees. [Fallback response - all API keys unavailable]"
+
+    async def generate_with_function_calling(
+        self, prompt: str, model: str, function_schema: Dict
+    ) -> Dict[str, Any]:
+        """Generate with Gemini function calling and automatic key rotation"""
+        print(f"[Gemini] Starting function calling with {len(self.keys)} keys available")
+        
+        # Try each available key
+        for attempt in range(len(self.keys)):
+            key_info = await self.get_available_key()
+            if not key_info:
+                print(f"[Gemini] No available keys on attempt {attempt + 1}")
+                break
+            
+            if not await self.acquire_key(key_info):
+                print(f"[Gemini] Could not acquire key {key_info.key_id}")
+                continue
+            
+            print(f"[Gemini] Attempt {attempt + 1}: trying key_id={key_info.key_id} with function calling")
+            
+            try:
+                client = genai.Client(api_key=key_info.api_key)
+                
+                response = client.models.generate_content(
+                    model=model,
+                    contents=[types.Content(parts=[types.Part(text=prompt)])],
+                    config=types.GenerateContentConfig(
+                        temperature=0.7,
+                        max_output_tokens=1000,
+                        tools=[types.Tool(function_declarations=[function_schema])]
+                    )
+                )
+                
+                # Extract function call result
+                if response.candidates and len(response.candidates) > 0:
+                    candidate = response.candidates[0]
+                    if candidate.content and candidate.content.parts and len(candidate.content.parts) > 0:
+                        part = candidate.content.parts[0]
+                        if hasattr(part, 'function_call') and part.function_call:
+                            function_call = part.function_call
+                            result = dict(function_call.args)
+                            
+                            self.record_success(key_info)
+                            print(f"[Gemini] Function calling success with key_id={key_info.key_id}")
+                            print(f"[Gemini] Result keys: {list(result.keys())}")
+                            
+                            return result
+                
+                # If we get here, no function call was found
+                print(f"[Gemini] No function call in response from key_id={key_info.key_id}")
+                self.record_error(key_info, "no_function_call")
+                
+            except Exception as e:
+                error_type = "unknown"
+                if "quota" in str(e).lower() or "limit" in str(e).lower():
+                    error_type = "quota_exceeded"
+                elif "429" in str(e) or "rate" in str(e).lower():
+                    error_type = "rate_limit"
+                elif "403" in str(e):
+                    error_type = "forbidden"
+                
+                print(f"[Gemini] Function calling failed for key_id={key_info.key_id}: {error_type} - {str(e)}")
+                self.record_error(key_info, error_type)
+                
+            finally:
+                self.release_key(key_info)
+        
+        # All keys failed
+        print(f"[Gemini] All {len(self.keys)} keys failed for function calling")
+        raise Exception("All API keys failed for function calling")
 
 
 # Global instance

@@ -37,6 +37,33 @@ class StateUpdater:
                 loc = locations.setdefault(location, {"desc": "", "occupants": []})
                 if subject not in loc["occupants"]:
                     loc["occupants"].append(subject)
+            elif ftype == "relationship":
+                subject = fact.get("subject", "").strip() or "Player"
+                object_entity = fact.get("object", "").strip() or "someone"
+                predicate = fact.get("predicate", "").strip() or "interacts with"
+                
+                # Add both characters to the world
+                characters = world.setdefault("characters", {})
+                
+                # Add subject character
+                char = characters.setdefault(subject, {"location": None, "items": [], "props": {}})
+                
+                # Add object character (if it's a person/character)
+                if object_entity not in ["someone", "mysterious figure"]:
+                    char_obj = characters.setdefault(object_entity, {"location": None, "items": [], "props": {}})
+                    # Add relationship info
+                    if "relationships" not in char:
+                        char["relationships"] = []
+                    if "relationships" not in char_obj:
+                        char_obj["relationships"] = []
+                    
+                    relationship = f"{predicate} {object_entity}"
+                    if relationship not in char["relationships"]:
+                        char["relationships"].append(relationship)
+                    
+                    reverse_relationship = f"met by {subject}"
+                    if reverse_relationship not in char_obj["relationships"]:
+                        char_obj["relationships"].append(reverse_relationship)
 
         # Persist KG snapshot
         try:

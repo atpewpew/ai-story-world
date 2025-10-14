@@ -22,7 +22,13 @@ def build_prompt_with_rag(manager, session: Dict[str, Any], player_action: str, 
         f"World summary: {world_summary}\n\n"
         f"Retrieved facts:\n{retrieved_text}\n\n"
         f"Recent history:\n{recent}\n\n"
-        f"Player action: \"{player_action}\"\n\nAI:"
+        f"Player action: \"{player_action}\"\n\n"
+        "Respond with a narrative continuation of the story, then provide 2-3 action choices for the player.\n"
+        "Format your response as:\n"
+        "[Your narrative response]\n\n"
+        "A) [First action option]\n"
+        "B) [Second action option]\n"
+        "C) [Third action option]\n\nAI:"
     )
 
 

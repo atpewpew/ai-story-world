@@ -1,0 +1,34 @@
+/node_modules
+/.env
+/.venv
+.env
+.venv
+__pycache__/
+node_modules/
+venv/
+*.pyc
+*.pyo
+node_modules
+
+# Node modules
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment and IDE files
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# OS junk
+Thumbs.db
+
+data/

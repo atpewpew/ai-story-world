@@ -64,6 +64,28 @@ Metrics available at `/metrics`. Health at `/health`.
 
 ---
 
+### Developer Debug Checklist
+
+1. Start the backend with autoreload:
+
+  ```bash
+  uvicorn ai_story.main:app --reload --port 8000
+  ```
+
+2. Ensure the frontend origin you use (e.g., `http://localhost:3000`) is listed in CORS settings.
+
+3. Validate the `/create_session` contract via curl:
+
+  ```bash
+  curl -v -H "Content-Type: application/json" -X POST \
+    -d '{"session_name":"cli-test","seed_text":"hello","settings":{}}' \
+    http://127.0.0.1:8000/create_session
+  ```
+
+4. Review backend logs for structured validation messages if you receive an HTTP 422 response.
+
+---
+
 ### 3. ARCHITECTURE OVERVIEW (Conceptual)
 
 **Core components:**

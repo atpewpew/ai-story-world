@@ -50,8 +50,7 @@ class AIStoryCLI:
         # Session storage paths
         self.sessions_dir = "./sessions"
         self.story_memory_dir = "./story_memory"
-        os.makedirs(self.sessions_dir, exist_ok=True)
-        os.makedirs(self.story_memory_dir, exist_ok=True)
+        # Note: These directories are no longer created as we use data/sessions/ for API storage
     
     def print_colored(self, text: str, color: str = Colors.ENDC):
         """Print colored text"""
@@ -162,7 +161,7 @@ class AIStoryCLI:
                     except Exception:
                         continue
         
-        # Check CLI session directories
+        # Check CLI session directories (legacy support)
         for session_dir in [self.sessions_dir, self.story_memory_dir]:
             if os.path.exists(session_dir):
                 for filename in os.listdir(session_dir):
@@ -183,7 +182,7 @@ class AIStoryCLI:
                                 'session_name': session_name,
                                 'created_at': created_at,
                                 'history_count': history_count,
-                                'source': 'Local',
+                                'source': 'Legacy',
                                 'filepath': filepath
                             })
                         except Exception as e:
@@ -230,8 +229,10 @@ class AIStoryCLI:
             }
         }
         
-        # Save to file
-        filepath = os.path.join(self.sessions_dir, f"story_memory_{self.session_id}.json")
+        # Save to unified storage directory
+        api_sessions_dir = os.path.join("data", "sessions")
+        os.makedirs(api_sessions_dir, exist_ok=True)
+        filepath = os.path.join(api_sessions_dir, f"{self.session_id}.json")
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(self.session_data, f, indent=2, ensure_ascii=False)
         
@@ -265,7 +266,7 @@ class AIStoryCLI:
             except Exception as e:
                 self.print_error(f"Failed to read API session file: {e}")
         
-        # Try CLI session directories
+        # Try CLI session directories (legacy support)
         for session_dir in [self.sessions_dir, self.story_memory_dir]:
             filepath = os.path.join(session_dir, f"story_memory_{session_id}.json")
             if os.path.exists(filepath):
@@ -273,10 +274,10 @@ class AIStoryCLI:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         self.session_data = json.load(f)
                     self.session_id = session_id
-                    self.print_success(f"Loaded session from local storage: {session_id}")
+                    self.print_success(f"Loaded session from legacy storage: {session_id}")
                     return True
                 except Exception as e:
-                    self.print_error(f"Failed to read local session file: {e}")
+                    self.print_error(f"Failed to read legacy session file: {e}")
                     return False
         
         self.print_error(f"Session {session_id} not found in any storage location")
@@ -342,8 +343,10 @@ class AIStoryCLI:
             # API mode - session is automatically saved
             return
         
-        # Standalone mode - save to file
-        filepath = os.path.join(self.sessions_dir, f"story_memory_{self.session_id}.json")
+        # Standalone mode - save to API storage directory for consistency
+        api_sessions_dir = os.path.join("data", "sessions")
+        os.makedirs(api_sessions_dir, exist_ok=True)
+        filepath = os.path.join(api_sessions_dir, f"{self.session_id}.json")
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(self.session_data, f, indent=2, ensure_ascii=False)
     
@@ -364,16 +367,28 @@ class AIStoryCLI:
                 self.print_error(f"Failed to delete session via API: {e}")
                 return False
         
-        # Standalone mode - delete file
+        # Standalone mode - delete from API storage directory
+        api_sessions_dir = os.path.join("data", "sessions")
+        api_filepath = os.path.join(api_sessions_dir, f"{target_id}.json")
+        if os.path.exists(api_filepath):
+            try:
+                os.remove(api_filepath)
+                self.print_success(f"Deleted session: {target_id}")
+                return True
+            except Exception as e:
+                self.print_error(f"Failed to delete session file: {e}")
+                return False
+        
+        # Try legacy directories as fallback
         for session_dir in [self.sessions_dir, self.story_memory_dir]:
             filepath = os.path.join(session_dir, f"story_memory_{target_id}.json")
             if os.path.exists(filepath):
                 try:
                     os.remove(filepath)
-                    self.print_success(f"Deleted session: {target_id}")
+                    self.print_success(f"Deleted legacy session: {target_id}")
                     return True
                 except Exception as e:
-                    self.print_error(f"Failed to delete session file: {e}")
+                    self.print_error(f"Failed to delete legacy session file: {e}")
                     return False
         
         self.print_error(f"Session {target_id} not found")
@@ -457,7 +472,14 @@ class AIStoryCLI:
                 self.print_colored("\nAvailable sessions:", Colors.BOLD)
                 for i, session in enumerate(sessions, 1):
                     source = session.get('source', 'Unknown')
-                    source_indicator = " [API]" if source == 'API' else " [Local]"
+                    if source == 'API':
+                        source_indicator = " [API]"
+                    elif source == 'API Storage':
+                        source_indicator = " [API]"
+                    elif source == 'Legacy':
+                        source_indicator = " [Legacy]"
+                    else:
+                        source_indicator = " [Local]"
                     self.print_colored(f"{i}. {session['session_name']} (ID: {session['session_id']}){source_indicator}", Colors.OKBLUE)
                 
                 try:
@@ -477,7 +499,14 @@ class AIStoryCLI:
                     self.print_colored(f"\nFound {len(sessions)} sessions:", Colors.BOLD)
                     for session in sessions:
                         source = session.get('source', 'Unknown')
-                        source_color = Colors.OKGREEN if source == 'API' else Colors.OKCYAN
+                        if source == 'API':
+                            source_color = Colors.OKGREEN
+                        elif source == 'API Storage':
+                            source_color = Colors.OKGREEN
+                        elif source == 'Legacy':
+                            source_color = Colors.WARNING
+                        else:
+                            source_color = Colors.OKCYAN
                         self.print_colored(f"  • {session['session_name']} (ID: {session['session_id']})", Colors.OKBLUE)
                         self.print_colored(f"    Created: {session['created_at']}, Entries: {session['history_count']}", Colors.OKCYAN)
                         self.print_colored(f"    Source: {source}", source_color)
@@ -491,7 +520,14 @@ class AIStoryCLI:
                 self.print_colored("\nAvailable sessions:", Colors.BOLD)
                 for i, session in enumerate(sessions, 1):
                     source = session.get('source', 'Unknown')
-                    source_indicator = " [API]" if source == 'API' else " [Local]"
+                    if source == 'API':
+                        source_indicator = " [API]"
+                    elif source == 'API Storage':
+                        source_indicator = " [API]"
+                    elif source == 'Legacy':
+                        source_indicator = " [Legacy]"
+                    else:
+                        source_indicator = " [Local]"
                     self.print_colored(f"{i}. {session['session_name']} (ID: {session['session_id']}){source_indicator}", Colors.OKBLUE)
                 
                 try:

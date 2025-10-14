@@ -20,16 +20,23 @@ class SessionManager:
     def _path(self, session_id: str) -> str:
         return os.path.join(SESSIONS_DIR, f"{session_id}.json")
 
-    def create_session(self, session_name: str, seed_text: Optional[str] = None) -> Dict[str, Any]:
+    def create_session(
+        self,
+        session_name: str,
+        seed_text: Optional[str] = None,
+        settings: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         session_id = str(uuid.uuid4())
         created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         seed = seed_text or (
             "You wake up in a misty forest. The air is heavy with fog. In the distance, a flickering lantern glows faintly."
         )
+        settings = settings or {}
         session = {
             "session_id": session_id,
             "session_name": session_name,
             "created_at": created_at,
+            "settings": settings,
             "history": [
                 {"turn_id": 0, "actor": "ai", "text": seed, "timestamp": created_at}
             ],
@@ -41,18 +48,30 @@ class SessionManager:
         with self._lock:
             self._cache[session_id] = session
             self._atomic_write(session_id, session)
-        return {"session_id": session_id, "created_at": created_at}
+        return {
+            "session_id": session_id,
+            "session_name": session_name,
+            "created_at": created_at,
+            "settings": settings,
+        }
 
     def load_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         with self._lock:
             if session_id in self._cache:
-                return self._cache[session_id]
+                cached = self._cache[session_id]
+                cached.setdefault("history", [])
+                cached.setdefault("world", {"characters": {}, "items": {}, "locations": {}})
+                return cached
         path = self._path(session_id)
         if not os.path.exists(path):
             return None
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            data.setdefault("history", [])
+            data.setdefault("world", {"characters": {}, "items": {}, "locations": {}})
+            data.setdefault("branches", {})
+            data.setdefault("settings", {})
             with self._lock:
                 self._cache[session_id] = data
             return data
@@ -137,5 +156,14 @@ class SessionManager:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         os.replace(tmp, path)
+
+    def save_session(self, session_id: str, session: Dict[str, Any]) -> None:
+        session.setdefault("history", [])
+        session.setdefault("world", {"characters": {}, "items": {}, "locations": {}})
+        session.setdefault("branches", {})
+        session.setdefault("settings", {})
+        with self._lock:
+            self._cache[session_id] = session
+            self._atomic_write(session_id, session)
 
 
