@@ -20,7 +20,7 @@ export default function Hero() {
         </p>
         
         <div className="hero-actions">
-          <button className="btn-primary" onClick={() => window.location.href = '/login'}>
+          <button className="btn-primary" onClick={() => window.location.href = '/dashboard'}>
             <Sparkles size={20} />
             Start Your Adventure
           </button>

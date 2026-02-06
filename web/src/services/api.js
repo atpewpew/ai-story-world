@@ -22,7 +22,6 @@ async function request(path, options = {}) {
   const finalHeaders = {
     Accept: 'application/json',
     ...(payload ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { 'X-API-Token': token } : {}),
     ...headers,
   };
 

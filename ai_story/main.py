@@ -55,9 +55,9 @@ app.add_middleware(
 from app.api.routes_story import demo_action
 app.add_api_route("/demo_action", demo_action, methods=["POST"])
 
-# Add authenticated routers
-app.include_router(session_router, dependencies=[Depends(require_api_token), Depends(ip_rate_limit)])
-app.include_router(story_router, dependencies=[Depends(require_api_token), Depends(ip_rate_limit)])
+# Add routers with rate limiting only (no authentication required for public use)
+app.include_router(session_router, dependencies=[Depends(ip_rate_limit)])
+app.include_router(story_router, dependencies=[Depends(ip_rate_limit)])
 
 
 @app.get("/health")

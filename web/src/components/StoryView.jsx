@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSession as getSessionApi, startStory, takeAction as takeActionApi } from '../services/api';
 
-export default function StoryView({ sessionId, token, onSessionUpdated }) {
+export default function StoryView({ sessionId, onSessionUpdated }) {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -12,13 +12,13 @@ export default function StoryView({ sessionId, token, onSessionUpdated }) {
 
   const loadSession = useCallback(
     async (id = sessionId) => {
-      if (!id || !token) {
+      if (!id) {
         return;
       }
       setLoadingSession(true);
       setError(null);
       try {
-        const data = await getSessionApi({ token, session_id: id });
+        const data = await getSessionApi({ session_id: id });
         const resolved = data.session || data;
         setSession(resolved);
         setInput('');
@@ -32,7 +32,7 @@ export default function StoryView({ sessionId, token, onSessionUpdated }) {
         setLoadingSession(false);
       }
     },
-    [onSessionUpdated, sessionId, token]
+    [onSessionUpdated, sessionId]
   );
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function StoryView({ sessionId, token, onSessionUpdated }) {
 
   const performAction = useCallback(
     async (actionText, useStartEndpoint = false) => {
-      if (!sessionId || !token) {
+      if (!sessionId) {
         return;
       }
       const trimmed = (actionText || '').trim();
@@ -58,10 +58,9 @@ export default function StoryView({ sessionId, token, onSessionUpdated }) {
       setError(null);
       try {
         if (useStartEndpoint) {
-          await startStory({ token, session_id: sessionId, seed_action: trimmed });
+          await startStory({ session_id: sessionId, seed_action: trimmed });
         } else {
           await takeActionApi({
-            token,
             session_id: sessionId,
             player_action: trimmed,
             options: { use_rag: true },
@@ -75,7 +74,7 @@ export default function StoryView({ sessionId, token, onSessionUpdated }) {
         setSubmitting(false);
       }
     },
-    [loadSession, sessionId, token]
+    [loadSession, sessionId]
   );
 
   const handleSendAction = useCallback(() => {

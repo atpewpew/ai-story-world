@@ -6,7 +6,7 @@ import WorldStatePanel from '../components/dashboard/WorldStatePanel';
 import CreateSessionModal from '../components/dashboard/CreateSessionModal';
 import { createSession, listSessions } from '../services/api';
 
-export default function Dashboard({ token }) {
+export default function Dashboard() {
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
@@ -14,12 +14,9 @@ export default function Dashboard({ token }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const loadSessions = useCallback(async () => {
-    if (!token) {
-      return;
-    }
     setLoading(true);
     try {
-      const data = await listSessions({ token });
+      const data = await listSessions();
       const items = data.sessions || data || [];
       setSessions(items);
       if (selectedSessionId) {
@@ -34,7 +31,7 @@ export default function Dashboard({ token }) {
     } finally {
       setLoading(false);
     }
-  }, [token, selectedSessionId]);
+  }, [selectedSessionId]);
 
   useEffect(() => {
     loadSessions();
@@ -55,7 +52,7 @@ export default function Dashboard({ token }) {
       const sessionName = sessionData.name.trim();
       const seedText = sessionData.seedText && sessionData.seedText.trim() ? sessionData.seedText.trim() : '';
 
-      const data = await createSession({ token, session_name: sessionName, seed_text: seedText });
+      const data = await createSession({ session_name: sessionName, seed_text: seedText });
       const session = data.session || data;
 
       await loadSessions();
@@ -85,7 +82,7 @@ export default function Dashboard({ token }) {
 
   return (
     <div className="dashboard">
-      <Navigation token={token} />
+      <Navigation />
 
       <div className="dashboard-grid">
         <SessionsList
@@ -94,13 +91,11 @@ export default function Dashboard({ token }) {
           onSelectSession={handleSelectSession}
           onCreateSession={loadSessions}
           onShowCreateModal={() => setShowCreateModal(true)}
-          token={token}
           loading={loading}
         />
 
         <StoryView
           sessionId={selectedSessionId}
-          token={token}
           onSessionUpdated={handleSessionUpdated}
         />
 

@@ -1,8 +1,7 @@
 import { LogOut, User } from 'lucide-react';
 
-export default function Navigation({ token, onLogout }) {
+export default function Navigation() {
   const handleLogout = () => {
-    localStorage.removeItem('api_token');
     window.location.href = '/';
   };
 

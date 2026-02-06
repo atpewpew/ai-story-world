@@ -7,7 +7,6 @@ export default function SessionsList({
   onDeleteSession, 
   currentSessionId,
   loading,
-  token,
   onCreateSession,
   onShowCreateModal
 }) {
@@ -16,7 +15,7 @@ export default function SessionsList({
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this session?')) {
       try {
-        await api.deleteSession(token, sessionId);
+        await api.deleteSession(sessionId);
         if (onDeleteSession) {
           await onDeleteSession(sessionId);
         }
