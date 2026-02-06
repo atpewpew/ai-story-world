@@ -1,7 +1,9 @@
 const API_BASE =
-  import.meta.env?.VITE_API_BASE_URL ??
+  import.meta.env?.VITE_API_BASE ??
   (typeof process !== 'undefined' ? process.env?.REACT_APP_API_BASE : undefined) ??
   '/api';
+
+console.log('🚀 API_BASE configured as:', API_BASE);
 
 class ApiError extends Error {
   constructor(message, status, response) {
