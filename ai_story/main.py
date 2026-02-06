@@ -45,6 +45,8 @@ app.add_middleware(
         "http://localhost:3004",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
+        "https://ai-story-world.vercel.app",
+        "https://ai-story-world-*.vercel.app",  # Allow Vercel preview deployments
     ],
     allow_credentials=True,
     allow_methods=["*"],
