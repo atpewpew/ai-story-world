@@ -3,6 +3,8 @@ import json
 import time
 import threading
 import uuid
+import shutil
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 
@@ -166,4 +168,31 @@ class SessionManager:
             self._cache[session_id] = session
             self._atomic_write(session_id, session)
 
+    @staticmethod
+    def cleanup_empty_kg_dirs() -> int:
+        """
+        Remove empty 'kg' directories from session folders.
+        These were created by older code but are no longer needed 
+        since KG data is stored centrally in data/kg/.
+        
+        Returns the number of directories removed.
+        """
+        removed_count = 0
+        base = Path(SESSIONS_DIR)
+        if not base.exists():
+            return 0
+        
+        for session_dir in base.iterdir():
+            if not session_dir.is_dir():
+                continue
+            kg_dir = session_dir / "kg"
+            if kg_dir.exists() and kg_dir.is_dir():
+                # Check if directory is empty
+                if not any(kg_dir.iterdir()):
+                    try:
+                        shutil.rmtree(kg_dir)
+                        removed_count += 1
+                    except Exception:
+                        pass  # Silently skip if we can't remove
+        return removed_count
 

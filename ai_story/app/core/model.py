@@ -467,7 +467,7 @@ class StoryModel:
 
         # Try custom LLM integration first (if available)
         try:
-            from ai_story.app.core import llm_integration  # type: ignore
+            from . import llm_integration  # type: ignore
         except Exception:
             llm_integration = None  # type: ignore
 

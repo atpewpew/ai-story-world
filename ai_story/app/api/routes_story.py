@@ -102,12 +102,8 @@ async def take_action(payload: TakeActionRequest):
     except Exception:
         logger.exception("Failed to save session after take_action")
     
-    # Ensure KG directory exists
-    kg_dir = os.path.join("data", "sessions", session_id, "kg")
-    try:
-        os.makedirs(kg_dir, exist_ok=True)
-    except Exception:
-        logger.exception("Failed to ensure knowledge graph directory", extra={"session_id": session_id})
+    # Removed redundant per-session KG folder creation — KG now stored centrally in data/kg/
+    # (The central KG directory is already created in app/memory/graph.py)
     
     # Upsert vector memory
     try:

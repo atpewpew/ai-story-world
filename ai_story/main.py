@@ -5,23 +5,34 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-from .app.api.routes_session import router as session_router
-from .app.api.routes_story import router as story_router
-from .app.utils.auth import require_api_token
-from .app.utils.rate_limit import ip_rate_limit
+from app.api.routes_session import router as session_router
+from app.api.routes_story import router as story_router
+from app.utils.auth import require_api_token
+from app.utils.rate_limit import ip_rate_limit
+from app.core.session_manager import SessionManager
 from prometheus_fastapi_instrumentator import Instrumentator
 
 # Load environment variables
 load_dotenv()
 
 # Reset the key manager global instance to ensure it loads keys after environment is set
-import ai_story.app.core.key_manager as km_module
+import app.core.key_manager as km_module
 km_module._key_manager = None
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("ai_story.main")
 
 app = FastAPI(title="AI Story World")
+
+# Startup: Clean up empty KG directories from old sessions
+@app.on_event("startup")
+async def startup_cleanup():
+    try:
+        removed = SessionManager.cleanup_empty_kg_dirs()
+        if removed > 0:
+            logger.info(f"Cleaned up {removed} empty KG directories from old sessions")
+    except Exception as e:
+        logger.warning(f"Could not clean up empty KG directories: {e}")
 
 # Add CORS middleware
 app.add_middleware(
@@ -41,7 +52,7 @@ app.add_middleware(
 )
 
 # Add demo endpoint without authentication first
-from .app.api.routes_story import demo_action
+from app.api.routes_story import demo_action
 app.add_api_route("/demo_action", demo_action, methods=["POST"])
 
 # Add authenticated routers

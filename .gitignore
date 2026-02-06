@@ -133,4 +133,5 @@ data/sessions/
 data/kg/
 
 # --- Misc ---
-meow.pyc
+meow.py 
+plan.md 

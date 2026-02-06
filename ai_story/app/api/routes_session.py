@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, Body, HTTPException, Query, status
 
-from ai_story.app.core.session_manager import SessionManager
-from ai_story.app.schemas.session import CreateSessionRequest
+from ..core.session_manager import SessionManager
+from ..schemas.session import CreateSessionRequest
 
 
 router = APIRouter(prefix="", tags=["session"])
