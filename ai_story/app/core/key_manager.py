@@ -135,7 +135,7 @@ class KeyManager:
             }
         return metrics
 
-    async def generate_with_key(self, key_info: KeyInfo, prompt: str, model: str = "gemini-2.5-flash") -> Tuple[Optional[str], Optional[str]]:
+    async def generate_with_key(self, key_info: KeyInfo, prompt: str, model: str = "gemini-3.1-flash-lite-preview") -> Tuple[Optional[str], Optional[str]]:
         """Generate text using specific key with error handling"""
         if not self.check_circuit_breaker(key_info):
             return None, "circuit_breaker_open"
@@ -182,7 +182,7 @@ class KeyManager:
         finally:
             self.release_key(key_info)
 
-    async def generate_with_rotation(self, prompt: str, model: str = "gemini-2.5-flash") -> str:
+    async def generate_with_rotation(self, prompt: str, model: str = "gemini-3.1-flash-lite-preview") -> str:
         """Generate text with automatic key rotation and fallback"""
         print(f"[Gemini] Starting rotation with {len(self.keys)} keys available")
         
@@ -239,7 +239,13 @@ class KeyManager:
                     config=types.GenerateContentConfig(
                         temperature=0.7,
                         max_output_tokens=1000,
-                        tools=[types.Tool(function_declarations=[function_schema])]
+                        tools=[types.Tool(function_declarations=[function_schema])],
+                        tool_config=types.ToolConfig(
+                            function_calling_config=types.FunctionCallingConfig(
+                                mode=types.FunctionCallingConfigMode.ANY,
+                                allowed_function_names=[function_schema["name"]]
+                            )
+                        )
                     )
                 )
                 
