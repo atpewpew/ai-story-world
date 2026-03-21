@@ -184,34 +184,12 @@ class KeyManager:
             self.release_key(key_info)
 
     async def generate_with_rotation(self, prompt: str, model: str = "gemini-3.1-flash-lite-preview") -> str:
-        """Generate text with automatic key rotation and fallback"""
-        print(f"[Gemini] Starting rotation with {len(self.keys)} keys available")
+        """Generate text with Groq primary and automatic key rotation for Gemini fallback"""
         
-        # Try each available key
-        for attempt in range(len(self.keys)):
-            key_info = await self.get_available_key()
-            if not key_info:
-                print(f"[Gemini] No available keys on attempt {attempt + 1}")
-                break
-            
-            print(f"[Gemini] Attempt {attempt + 1}: trying key_id={key_info.key_id}")
-            result, error = await self.generate_with_key(key_info, prompt, model)
-            if result:
-                print(f"[Gemini] Success on attempt {attempt + 1} with key_id={key_info.key_id}")
-                return result
-            
-            # If we get here, the key failed
-            print(f"[Gemini] Failed on attempt {attempt + 1} with key_id={key_info.key_id}: {error}")
-            if error in ["circuit_breaker_open", "concurrency_limit"]:
-                continue  # Try next key
-            elif error in ["quota_exceeded", "rate_limit"]:
-                # These errors suggest we should try a different key
-                continue
-        
-        # All keys failed, fallback to Groq if available
-        print(f"[Gemini] All {len(self.keys)} keys failed, attempting Groq fallback")
+        # Try Groq First
         groq_key = os.getenv("GROQ_API_KEY")
         if groq_key:
+            print("[Groq] Attempting Groq primary strategy for text generation")
             try:
                 import httpx
                 async with httpx.AsyncClient() as client:
@@ -234,21 +212,87 @@ class KeyManager:
                     if response.status_code == 200:
                         data = response.json()
                         text = data["choices"][0]["message"]["content"]
-                        print("[Groq] Fallback text generation success")
+                        print("[Groq] Primary text generation success")
                         return text
                     else:
-                        print(f"[Groq] Fallback failed with status {response.status_code}: {response.text}")
+                        print(f"[Groq] Primary failed with status {response.status_code}: {response.text}")
             except Exception as e:
-                print(f"[Groq] Fallback text generation exception: {str(e)}")
+                print(f"[Groq] Primary text generation exception: {str(e)}")
 
-        print("[Fallback] All API keys unavailable, returning default response")
+        print(f"[Gemini] Falling back to Gemini keys. Starting rotation with {len(self.keys)} keys available")
+        
+        # Try each available key
+        for attempt in range(len(self.keys)):
+            key_info = await self.get_available_key()
+            if not key_info:
+                print(f"[Gemini] No available keys on attempt {attempt + 1}")
+                break
+            
+            print(f"[Gemini] Attempt {attempt + 1}: trying key_id={key_info.key_id}")
+            result, error = await self.generate_with_key(key_info, prompt, model)
+            if result:
+                print(f"[Gemini] Success on attempt {attempt + 1} with key_id={key_info.key_id}")
+                return result
+            
+            # If we get here, the key failed
+            print(f"[Gemini] Failed on attempt {attempt + 1} with key_id={key_info.key_id}: {error}")
+            if error in ["circuit_breaker_open", "concurrency_limit"]:
+                continue  # Try next key
+            elif error in ["quota_exceeded", "rate_limit"]:
+                # These errors suggest we should try a different key
+                continue
+        
+        # All keys failed, return fallback
+        print(f"[Gemini] All {len(self.keys)} keys failed, returning fallback response")
         return "The story continues with the wind rustling through the trees. [Fallback response - all API keys unavailable]"
 
     async def generate_with_function_calling(
         self, prompt: str, model: str, function_schema: Dict
     ) -> Dict[str, Any]:
-        """Generate with Gemini function calling and automatic key rotation"""
-        print(f"[Gemini] Starting function calling with {len(self.keys)} keys available")
+        """Generate with Groq primary and Gemini function calling as fallback"""
+        # Try Groq First
+        groq_key = os.getenv("GROQ_API_KEY")
+        if groq_key:
+            print("[Groq] Attempting Groq primary strategy for function calling")
+            try:
+                import httpx
+                async with httpx.AsyncClient() as client:
+                    tools = [{"type": "function", "function": function_schema}]
+                    payload = {
+                        "model": "openai/gpt-oss-120b",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "tools": tools,
+                        "tool_choice": {"type": "function", "function": {"name": function_schema["name"]}},
+                        "temperature": 0.7,
+                        "max_tokens": 1000
+                    }
+                    headers = {
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    }
+                    response = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers=headers,
+                        json=payload,
+                        timeout=30.0
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        message = data["choices"][0]["message"]
+                        if message.get("tool_calls"):
+                            args_str = message["tool_calls"][0]["function"]["arguments"]
+                            result = json.loads(args_str)
+                            print("[Groq] Primary function calling success")
+                            return result
+                        else:
+                            print("[Groq] Response returned success but missing tool_calls")
+                    else:
+                        print(f"[Groq] Primary failed with status {response.status_code}: {response.text}")
+            except Exception as e:
+                print(f"[Groq] Primary exception: {str(e)}")
+
+        print(f"[Gemini] Falling back to Gemini keys. Starting function calling with {len(self.keys)} keys available")
         
         # Try each available key
         for attempt in range(len(self.keys)):
@@ -316,46 +360,8 @@ class KeyManager:
             finally:
                 self.release_key(key_info)
         
-        # All keys failed, fallback to Groq if available
-        print(f"[Gemini] All {len(self.keys)} keys failed for function calling, attempting Groq fallback")
-        groq_key = os.getenv("GROQ_API_KEY")
-        if groq_key:
-            try:
-                import httpx
-                async with httpx.AsyncClient() as client:
-                    tools = [{"type": "function", "function": function_schema}]
-                    payload = {
-                        "model": "openai/gpt-oss-120b",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "tools": tools,
-                        "tool_choice": {"type": "function", "function": {"name": function_schema["name"]}},
-                        "temperature": 0.7,
-                        "max_tokens": 1000
-                    }
-                    headers = {
-                        "Authorization": f"Bearer {groq_key}",
-                        "Content-Type": "application/json"
-                    }
-                    response = await client.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers=headers,
-                        json=payload,
-                        timeout=30.0
-                    )
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        message = data["choices"][0]["message"]
-                        if message.get("tool_calls"):
-                            args_str = message["tool_calls"][0]["function"]["arguments"]
-                            result = json.loads(args_str)
-                            print("[Groq] Fallback function calling success")
-                            return result
-                    else:
-                        print(f"[Groq] Fallback failed with status {response.status_code}: {response.text}")
-            except Exception as e:
-                print(f"[Groq] Fallback exception: {str(e)}")
-
+        # All keys failed
+        print(f"[Gemini] All {len(self.keys)} keys failed for function calling")
         raise Exception("All API keys failed for function calling")
 
 
